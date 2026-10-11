@@ -88,9 +88,11 @@ app.use('/api/wishlist', wishlistRoutes);
 // Error Handler
 app.use(errorHandler);
 
-app.listen(Number(PORT), '0.0.0.0', () => {
-  console.log(`🚀 MultiVendor API Server running on port ${PORT}`);
-  console.log(`📡 Health Check: http://localhost:${PORT}/api/health`);
-});
+if (!process.env.VERCEL) {
+  app.listen(Number(PORT), '0.0.0.0', () => {
+    console.log(`🚀 MultiVendor API Server running on port ${PORT}`);
+    console.log(`📡 Health Check: http://localhost:${PORT}/api/health`);
+  });
+}
 
 export default app;
