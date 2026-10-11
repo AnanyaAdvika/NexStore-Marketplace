@@ -72,6 +72,56 @@ const healthHandler = async (_req: express.Request, res: express.Response) => {
 app.get('/api/health', healthHandler);
 app.get('/health', healthHandler);
 
+// One-time Database Schema Initialization & Seeding Route for Serverless Environments
+app.get('/api/init-database', async (_req, res) => {
+  try {
+    const fs = await import('fs');
+    const path = await import('path');
+    const { runMarketplaceSeed } = await import('./db/seed.js');
+
+    // Read and execute initial migration SQL
+    const sqlPath = path.join(process.cwd(), 'prisma', 'initial_migration.sql');
+    if (fs.existsSync(sqlPath)) {
+      const sqlContent = fs.readFileSync(sqlPath, 'utf8');
+      // Split into statements and execute
+      const statements = sqlContent
+        .split(';')
+        .map((s: string) => s.trim())
+        .filter((s: string) => s.length > 0);
+
+      for (const stmt of statements) {
+        try {
+          await prisma.$executeRawUnsafe(stmt);
+        } catch (e: any) {
+          // Ignore if table/constraint/index already exists
+          if (!e.message?.includes('already exists')) {
+            console.warn('SQL statement execution warning:', e.message);
+          }
+        }
+      }
+    }
+
+    // Run the full idempotent seed
+    await runMarketplaceSeed();
+
+    const categoryCount = await prisma.category.count();
+    const productCount = await prisma.product.count();
+
+    return res.json({
+      success: true,
+      message: 'Database schema provisioned and 250+ products seeded successfully!',
+      categories: categoryCount,
+      products: productCount,
+    });
+  } catch (err: any) {
+    console.error('Database initialization error:', err);
+    return res.status(500).json({
+      success: false,
+      error: err.message,
+    });
+  }
+});
+
 // Mount Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);

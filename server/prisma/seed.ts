@@ -793,7 +793,7 @@ function buildCatalog(): SeedProductDef[] {
 // ==============================================================================
 // MAIN IDEMPOTENT SEED EXECUTION
 // ==============================================================================
-async function main() {
+export async function runMarketplaceSeed() {
   console.log('🌱 Starting Idempotent NexStore Marketplace Seeding...');
   console.log('🔒 Note: Non-destructive seed. Existing records will be preserved/upserted.\n');
 
@@ -1201,11 +1201,13 @@ async function main() {
   console.log('🎉 Catalogue Integrity Verified! All 240+ products and 12 categories are active.\n');
 }
 
-main()
-  .catch((e) => {
-    console.error('Seed execution error:', e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+if (process.argv[1]?.includes('seed.ts') || process.argv[1]?.includes('seed.js')) {
+  runMarketplaceSeed()
+    .catch((e) => {
+      console.error('Seed execution error:', e);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}
