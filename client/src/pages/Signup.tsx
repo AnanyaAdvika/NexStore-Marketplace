@@ -48,10 +48,11 @@ export function Signup() {
       });
 
       success(`Welcome to NexStore, ${user.name}!`);
+      const redirect = searchParams.get('redirect');
       if (user.role === 'VENDOR') {
         navigate('/vendor/dashboard');
       } else {
-        navigate('/products');
+        navigate(redirect || '/');
       }
     } catch (err: any) {
       error(err.message || 'Registration failed');

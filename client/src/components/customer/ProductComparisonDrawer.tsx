@@ -130,6 +130,46 @@ export function ProductComparisonDrawer() {
                     ))}
                   </tr>
 
+                  {/* Row: Discount & Estimated Savings */}
+                  <tr className="border-b border-slate-100">
+                    <td className="py-3 px-3 text-xs font-bold text-slate-500">Savings & Discount</td>
+                    {comparedProducts.map((item) => {
+                      const maxPrice = Math.max(...comparedProducts.map((p) => p.price));
+                      const savingsVsOther = maxPrice - item.price;
+                      return (
+                        <td key={item.id} className="py-3 px-3 text-xs">
+                          {savingsVsOther > 0 ? (
+                            <span className="font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md inline-block">
+                              Save {formatCurrency(savingsVsOther)} vs others!
+                            </span>
+                          ) : (
+                            <span className="text-slate-500 text-[11px]">
+                              {item.discountPercent > 0 ? `${item.discountPercent}% store discount` : 'Regular Price'}
+                            </span>
+                          )}
+                        </td>
+                      );
+                    })}
+                    {[...Array(3 - comparedProducts.length)].map((_, idx) => (
+                      <td key={`empty-sav-${idx}`} className="py-3 px-3" />
+                    ))}
+                  </tr>
+
+                  {/* Row: Shipping Estimate */}
+                  <tr className="border-b border-slate-100 bg-slate-50/30">
+                    <td className="py-3 px-3 text-xs font-bold text-slate-500">Shipping</td>
+                    {comparedProducts.map((item) => (
+                      <td key={item.id} className="py-3 px-3 text-xs">
+                        <span className="text-slate-700 font-medium">
+                          {item.price >= 1000 ? 'Free Shipping (2-3 business days)' : 'Standard Delivery ₹50 (3-4 days)'}
+                        </span>
+                      </td>
+                    ))}
+                    {[...Array(3 - comparedProducts.length)].map((_, idx) => (
+                      <td key={`empty-ship-${idx}`} className="py-3 px-3" />
+                    ))}
+                  </tr>
+
                   {/* Row: Vendor & Trust */}
                   <tr className="border-b border-slate-100">
                     <td className="py-3 px-3 text-xs font-bold text-slate-500">Seller & Trust</td>

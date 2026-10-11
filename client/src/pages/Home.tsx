@@ -10,44 +10,80 @@ import {
   Percent,
   CheckCircle,
   Star,
+  AlertCircle,
+  RotateCcw,
 } from 'lucide-react';
 import { Product, Category, Vendor, CompetitiveDealItem } from '../types/index.js';
 import { api } from '../services/api.js';
 import { ProductCard } from '../components/customer/ProductCard.js';
 import { formatCurrency, getTrustBadge } from '../utils/formatters.js';
+import { AuthEntryModal } from '../components/common/AuthEntryModal.js';
+import { useAuth } from '../context/AuthContext.js';
 
 export function Home() {
+  const { user, loading: authLoading } = useAuth();
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [bestDeals, setBestDeals] = useState<CompetitiveDealItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [apiError, setApiError] = useState<string | null>(null);
+
+  // Show entry modal on first visit without authenticated session
+  const [showAuthModal, setShowAuthModal] = useState(() => {
+    return !localStorage.getItem('token') && !sessionStorage.getItem('nexstore_entry_dismissed');
+  });
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setApiError(null);
+      const [featData, catData, vendData, dealsData] = await Promise.all([
+        api.getFeaturedProducts(),
+        api.getCategories(),
+        api.getVendors(),
+        api.getBestDeals(),
+      ]);
+      setFeaturedProducts(featData || []);
+      setCategories(catData || []);
+      setVendors(vendData || []);
+      setBestDeals(dealsData || []);
+    } catch (err: any) {
+      console.error('Failed to load homepage data:', err);
+      setApiError(err.message || 'Unable to load marketplace data. Please ensure the backend is running.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function loadData() {
-      try {
-        setLoading(true);
-        const [featData, catData, vendData, dealsData] = await Promise.all([
-          api.getFeaturedProducts(),
-          api.getCategories(),
-          api.getVendors(),
-          api.getBestDeals(),
-        ]);
-        setFeaturedProducts(featData || []);
-        setCategories(catData || []);
-        setVendors(vendData || []);
-        setBestDeals(dealsData || []);
-      } catch (err) {
-        console.error('Failed to load homepage data:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
     loadData();
   }, []);
 
   return (
     <div className="space-y-14 pb-20 bg-[#faf7f2]">
+      {/* First-Visit Entry Modal */}
+      <AuthEntryModal
+        isOpen={showAuthModal && !user && !authLoading}
+        onClose={() => setShowAuthModal(false)}
+      />
+
+      {/* Backend Outage / Error Banner */}
+      {apiError && (
+        <div className="mx-4 sm:mx-6 lg:mx-8 mt-4 p-4 bg-rose-50 border border-rose-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-rose-800 shadow-sm">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+            <span><strong>Marketplace Connection Issue:</strong> {apiError}</span>
+          </div>
+          <button
+            onClick={loadData}
+            className="px-4 py-1.5 bg-[#4a3428] hover:bg-[#634735] text-white font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 self-start sm:self-auto shrink-0 shadow-sm"
+          >
+            <RotateCcw className="w-3.5 h-3.5" /> Retry Request
+          </button>
+        </div>
+      )}
+
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-[#eee3d6] text-[#33261f] rounded-[2rem] mx-4 sm:mx-6 lg:mx-8 mt-6 shadow-soft border border-[#e3d4c4]">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#c9a889]/30 via-transparent to-transparent"></div>

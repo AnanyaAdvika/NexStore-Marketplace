@@ -73,6 +73,27 @@ export function VendorDashboard() {
           </Link>
         </div>
 
+        {/* Application Status Notice */}
+        {vendor.status === 'PENDING' && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+            <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div className="text-xs text-amber-800 space-y-1">
+              <p className="font-bold text-sm text-amber-900">Store Application Status: PENDING REVIEW</p>
+              <p>Your seller registration is currently under review by the NexStore marketplace admin team. While pending, you can explore the dashboard and prepare product listings. Your products will become visible to marketplace buyers once an admin approves your store.</p>
+            </div>
+          </div>
+        )}
+
+        {vendor.status === 'SUSPENDED' && (
+          <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4 flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+            <div className="text-xs text-rose-800 space-y-1">
+              <p className="font-bold text-sm text-rose-900">Store Status: SUSPENDED</p>
+              <p>Your store has been temporarily suspended by the marketplace administrator. Please review your fulfillment metrics and contact support.</p>
+            </div>
+          </div>
+        )}
+
         {/* 4 Stat Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-1">

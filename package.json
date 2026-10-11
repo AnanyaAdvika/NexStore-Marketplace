@@ -4,14 +4,15 @@
   "description": "Production-grade Full-Stack Multi-Vendor E-Commerce Platform",
   "private": true,
   "scripts": {
-    "install:all": "npm.cmd install && cd server && npm.cmd install && cd ../client && npm.cmd install",
-    "dev:server": "cd server && npm.cmd run dev",
-    "dev:client": "cd client && npm.cmd run dev",
-    "dev": "concurrently \"npm.cmd run dev:server\" \"npm.cmd run dev:client\"",
-    "build:server": "cd server && npm.cmd run build",
-    "build:client": "cd client && npm.cmd run build",
-    "build": "npm.cmd run build:server && npm.cmd run build:client",
-    "seed": "cd server && npm.cmd run seed"
+    "install:all": "npm install && npm --prefix server install && npm --prefix client install",
+    "dev:server": "npm --prefix server run dev",
+    "dev:client": "npm --prefix client run dev",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "build:server": "npm --prefix server run build",
+    "build:client": "npm --prefix client run build",
+    "build": "npm run build:server && npm run build:client",
+    "seed": "npm --prefix server run seed",
+    "seed:catalog": "npm --prefix server run seed:catalog"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

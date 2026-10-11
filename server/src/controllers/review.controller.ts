@@ -64,6 +64,7 @@ export async function addReview(req: AuthenticatedRequest, res: Response) {
         productId,
         rating: numRating,
         comment,
+        isVerifiedPurchase: true,
       },
       include: {
         user: { select: { id: true, name: true } },

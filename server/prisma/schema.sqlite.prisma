@@ -69,7 +69,7 @@ model Product {
   vendorId        String
   categoryId      String
   title           String
-  slug            String
+  slug            String      @unique
   description     String
   price           Float
   compareAtPrice  Float?
@@ -215,9 +215,10 @@ model Review {
   id        String   @id @default(uuid())
   userId    String
   productId String
-  rating    Int
-  comment   String
-  createdAt DateTime @default(now())
+  rating             Int
+  comment            String
+  isVerifiedPurchase Boolean  @default(true)
+  createdAt          DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)

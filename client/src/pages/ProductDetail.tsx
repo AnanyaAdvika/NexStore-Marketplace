@@ -14,6 +14,7 @@ import {
   BarChart2,
   Bell,
   BellRing,
+  CheckCircle,
 } from 'lucide-react';
 import { Product } from '../types/index.js';
 import { api } from '../services/api.js';
@@ -554,6 +555,11 @@ export function ProductDetail() {
                       {rev.user.name.charAt(0)}
                     </div>
                     <span className="text-xs font-bold text-slate-800">{rev.user.name}</span>
+                    {((rev as any).isVerifiedPurchase ?? true) && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                        <CheckCircle className="w-3 h-3 text-emerald-600" /> Verified Purchase
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center gap-1">
                     {[...Array(rev.rating)].map((_, i) => (

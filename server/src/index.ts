@@ -12,6 +12,7 @@ import couponRoutes from './routes/coupon.routes.js';
 import reviewRoutes from './routes/review.routes.js';
 import addressRoutes from './routes/address.routes.js';
 import wishlistRoutes from './routes/wishlist.routes.js';
+import { prisma } from './utils/prisma.js';
 import { errorHandler } from './middlewares/error.middleware.js';
 
 dotenv.config();
@@ -40,15 +41,36 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Health Check
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development',
-    service: 'MultiVendor E-Commerce Platform API',
-  });
-});
+// Health Check with Database Connectivity Verification
+const healthHandler = async (_req: express.Request, res: express.Response) => {
+  try {
+    // Verify database connectivity
+    const categoryCount = await prisma.category.count();
+    const missingEnv: string[] = [];
+    if (!process.env.JWT_SECRET) missingEnv.push('JWT_SECRET');
+
+    return res.status(200).json({
+      status: 'ok',
+      database: 'connected',
+      categoriesCount: categoryCount,
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+      service: 'NexStore Multi-Vendor Marketplace API',
+      warnings: missingEnv.length > 0 ? `Missing env vars: ${missingEnv.join(', ')}` : undefined,
+    });
+  } catch (error: any) {
+    return res.status(503).json({
+      status: 'degraded',
+      database: 'disconnected',
+      error: error.message || 'Database connection failure',
+      timestamp: new Date().toISOString(),
+      service: 'NexStore Multi-Vendor Marketplace API',
+    });
+  }
+};
+
+app.get('/api/health', healthHandler);
+app.get('/health', healthHandler);
 
 // Mount Routes
 app.use('/api/auth', authRoutes);

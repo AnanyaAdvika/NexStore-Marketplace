@@ -9,6 +9,7 @@ import {
   Truck,
   ArrowRight,
   Plus,
+  Sparkles,
 } from 'lucide-react';
 import { useCart } from '../context/CartContext.js';
 import { useAuth } from '../context/AuthContext.js';
@@ -26,7 +27,8 @@ export function Checkout() {
 
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string>('');
-  const [paymentMethod, setPaymentMethod] = useState<'COD' | 'UPI' | 'CARD'>('UPI');
+  const [paymentMethod, setPaymentMethod] = useState<'DEMO_PAYMENT' | 'COD'>('DEMO_PAYMENT');
+  const [simulateFailure, setSimulateFailure] = useState(false);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   // New Address form toggle & state
@@ -78,10 +80,15 @@ export function Checkout() {
       return;
     }
 
+    if (paymentMethod === 'DEMO_PAYMENT' && simulateFailure) {
+      error('Simulated Payment Declined: Test card or account has insufficient test funds. Uncheck failure test to simulate success.');
+      return;
+    }
+
     try {
       setIsPlacingOrder(true);
       const payload: any = {
-        paymentMethod,
+        paymentMethod: paymentMethod === 'DEMO_PAYMENT' ? 'DEMO_SIMULATED' : 'COD',
         couponCode: couponCode || undefined,
       };
 
@@ -246,37 +253,81 @@ export function Checkout() {
           {/* 2. Payment Method */}
           <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-4">
             <h2 className="text-sm font-extrabold text-slate-900 pb-3 border-b border-slate-100 flex items-center gap-2">
-              <CreditCard className="w-4 h-4 text-indigo-600" /> 2. Select Payment Method
+              <CreditCard className="w-4 h-4 text-[#79563e]" /> 2. Select Payment Method
             </h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {[
-                { id: 'UPI', label: 'UPI / QR Code', sub: 'Instant & Zero Fee' },
-                { id: 'CARD', label: 'Credit / Debit Card', sub: 'Visa, Master, RuPay' },
-                { id: 'COD', label: 'Cash on Delivery', sub: 'Pay upon delivery' },
-              ].map((method) => (
-                <label
-                  key={method.id}
-                  className={`p-4 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between ${
-                    paymentMethod === method.id
-                      ? 'bg-indigo-50/50 border-indigo-600 ring-2 ring-indigo-600/30'
-                      : 'bg-white border-slate-200 hover:border-slate-300'
-                  }`}
-                >
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label
+                className={`p-4 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between ${
+                  paymentMethod === 'DEMO_PAYMENT'
+                    ? 'bg-[#f5ede3] border-[#79563e] ring-2 ring-[#79563e]/30'
+                    : 'bg-white border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                <div>
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-xs text-slate-900">{method.label}</span>
+                    <span className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
+                      <Sparkles className="w-4 h-4 text-[#9a704f]" /> Demo Payment
+                    </span>
                     <input
                       type="radio"
                       name="paymentMethod"
-                      value={method.id}
-                      checked={paymentMethod === method.id}
-                      onChange={() => setPaymentMethod(method.id as any)}
-                      className="w-4 h-4 text-indigo-600"
+                      value="DEMO_PAYMENT"
+                      checked={paymentMethod === 'DEMO_PAYMENT'}
+                      onChange={() => setPaymentMethod('DEMO_PAYMENT' as any)}
+                      className="w-4 h-4 text-[#79563e]"
                     />
                   </div>
-                  <span className="text-[11px] text-slate-400 mt-1">{method.sub}</span>
-                </label>
-              ))}
+                  <span className="text-[11px] font-bold text-emerald-700 block mt-1">
+                    SIMULATED — no real money is charged
+                  </span>
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    Instant sandbox payment simulation with automated receipt. No credit card or banking details required.
+                  </p>
+                </div>
+
+                {paymentMethod === 'DEMO_PAYMENT' && (
+                  <div className="mt-3 pt-2 border-t border-[#dfcebc]">
+                    <label className="flex items-center gap-2 text-[11px] text-rose-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={simulateFailure}
+                        onChange={(e) => setSimulateFailure(e.target.checked)}
+                        className="rounded text-rose-600"
+                      />
+                      <span>Test Failure Simulation (declines transaction)</span>
+                    </label>
+                  </div>
+                )}
+              </label>
+
+              <label
+                className={`p-4 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between ${
+                  paymentMethod === 'COD'
+                    ? 'bg-[#f5ede3] border-[#79563e] ring-2 ring-[#79563e]/30'
+                    : 'bg-white border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
+                      <Truck className="w-4 h-4 text-slate-600" /> Cash on Delivery
+                    </span>
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="COD"
+                      checked={paymentMethod === 'COD'}
+                      onChange={() => setPaymentMethod('COD' as any)}
+                      className="w-4 h-4 text-[#79563e]"
+                    />
+                  </div>
+                  <span className="text-[11px] text-slate-500 block mt-1">Pay upon package delivery</span>
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Pay delivery executive in cash upon arrival of your packages.
+                  </p>
+                </div>
+              </label>
             </div>
           </div>
         </div>

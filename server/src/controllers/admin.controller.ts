@@ -2,7 +2,7 @@ import { Response } from 'express';
 import { prisma } from '../utils/prisma.js';
 import { sendSuccess, sendError } from '../utils/response.js';
 import { AuthenticatedRequest } from '../middlewares/auth.middleware.js';
-import { calculateTrustScore } from '../services/trustScore.service.js';
+import { calculateTrustScore, recalculateVendorTrust } from '../services/trustScore.service.js';
 
 export async function getAdminAnalytics(req: AuthenticatedRequest, res: Response) {
   try {
@@ -87,18 +87,26 @@ export async function getAllVendors(req: AuthenticatedRequest, res: Response) {
 export async function updateVendorStatus(req: AuthenticatedRequest, res: Response) {
   try {
     const { id } = req.params;
-    const { status } = req.body; // APPROVED, REJECTED, PENDING
+    const { status, isEcoFriendlyCertified } = req.body; // APPROVED, REJECTED, PENDING, SUSPENDED
 
-    if (!['APPROVED', 'REJECTED', 'PENDING'].includes(status)) {
-      return sendError(res, 'Invalid status value', 400);
+    const validStatuses = ['APPROVED', 'REJECTED', 'PENDING', 'SUSPENDED'];
+    if (status && !validStatuses.includes(status)) {
+      return sendError(res, `Invalid status value. Allowed: ${validStatuses.join(', ')}`, 400);
     }
+
+    const updateData: any = {};
+    if (status) updateData.status = status;
+    if (typeof isEcoFriendlyCertified === 'boolean') updateData.isEcoFriendlyCertified = isEcoFriendlyCertified;
 
     const updated = await prisma.vendor.update({
       where: { id },
-      data: { status },
+      data: updateData,
     });
 
-    return sendSuccess(res, updated, `Vendor status updated to ${status}`);
+    // Recalculate trust metrics
+    await recalculateVendorTrust(id);
+
+    return sendSuccess(res, updated, `Vendor updated successfully`);
   } catch (error: any) {
     return sendError(res, error.message, 500);
   }

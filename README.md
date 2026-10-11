@@ -71,13 +71,25 @@ The refreshed customer experience uses a warm editorial palette—paper beige, c
 - **Price watch:** save a target price for a product in this browser. When you revisit its product page, the page can tell you if the displayed price has reached your target. This is browser-local only; it does not send push notifications or emails.
 - **Verified-purchase reviews:** the review API now requires a delivered seller sub-order for that product and rejects a second review from the same account for the same product.
 
-### Demo catalog note
+### Demo Catalog & Idempotent Seeding
 
-These are generated sample listings intended for development and demos, not live supplier inventory. Product prices, ratings and stock values in the generated catalog are illustrative. To add just the expanded listings to an existing demo database without deleting current records, run `cd server && npm run seed:catalog`. This incremental command skips products that already exist. The original full `npm run seed` script still clears and recreates demo records, so **do not run the full seed against a database containing data you need to keep**.
+The seed script (`npm --prefix server run seed`) is **completely idempotent and non-destructive**:
+- Populates **250+ distinct, realistic products** with high-resolution photography across **12 categories**.
+- Upserts **6 verified demo vendors** across different categories.
+- Establishes **real cross-vendor price comparison groups** (`catalogGroup`) for live side-by-side deal comparisons.
+- Safe to run on fresh setups or existing databases — will not create duplicate entries or erase existing users.
+- Prints an automated **Catalogue Integrity Audit** verifying product counts and cross-vendor groups.
 
-### Features that still need real integrations before production
+### API Health Check
 
-Card/UPI gateway payments, carrier-backed live shipment events, email/push notifications, and server-backed price alerts are not made production-ready by this UI/catalog update. Connect and verify those services on the backend before representing them as live features.
+The backend features an active health inspection endpoint at `/api/health` and `/health`:
+- Verifies direct database connectivity.
+- Returns JSON with database status, category counts, and server timestamp.
+- Returns HTTP 503 if the database is unreachable, enabling frontend graceful degradation.
+
+### Features That Still Need Real Integrations Before Production
+
+Card/UPI gateway payments (simulated in demo mode with full order splitting and invoice generation), carrier-backed live shipment webhook events, and email/SMS OTP delivery require live external API credentials before deploying for real commerce.
 
 ---
 

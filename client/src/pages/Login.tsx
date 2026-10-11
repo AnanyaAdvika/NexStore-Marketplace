@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ShoppingBag, Lock, Mail, ArrowRight, ShieldCheck, UserCheck, Store } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.js';
 import { useToast } from '../context/ToastContext.js';
 
 export function Login() {
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -12,6 +13,22 @@ export function Login() {
   const { login } = useAuth();
   const { success, error } = useToast();
   const navigate = useNavigate();
+
+  const redirectUrl = searchParams.get('redirect') || null;
+
+  const navigateAfterAuth = (user: any) => {
+    if (redirectUrl) {
+      navigate(redirectUrl);
+      return;
+    }
+    if (user.role === 'VENDOR') {
+      navigate('/vendor/dashboard');
+    } else if (user.role === 'ADMIN') {
+      navigate('/admin/dashboard');
+    } else {
+      navigate('/');
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,14 +41,7 @@ export function Login() {
       setLoading(true);
       const user = await login({ email, password });
       success(`Welcome back, ${user.name}!`);
-
-      if (user.role === 'VENDOR') {
-        navigate('/vendor/dashboard');
-      } else if (user.role === 'ADMIN') {
-        navigate('/admin/dashboard');
-      } else {
-        navigate('/products');
-      }
+      navigateAfterAuth(user);
     } catch (err: any) {
       error(err.message || 'Login failed');
     } finally {
@@ -47,14 +57,7 @@ export function Login() {
       setLoading(true);
       const user = await login({ email: demoEmail, password: 'password123' });
       success(`Logged in as ${demoRole}!`);
-
-      if (user.role === 'VENDOR') {
-        navigate('/vendor/dashboard');
-      } else if (user.role === 'ADMIN') {
-        navigate('/admin/dashboard');
-      } else {
-        navigate('/products');
-      }
+      navigateAfterAuth(user);
     } catch (err: any) {
       error(err.message || 'Demo login failed');
     } finally {

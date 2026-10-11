@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Filter, SlidersHorizontal, Leaf, X, RotateCcw } from 'lucide-react';
+import { Filter, SlidersHorizontal, Leaf, X, RotateCcw, AlertCircle } from 'lucide-react';
 import { Product, Category, Vendor } from '../types/index.js';
 import { api } from '../services/api.js';
 import { ProductCard } from '../components/customer/ProductCard.js';
@@ -14,6 +14,7 @@ export function Products() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   // Filter states
   const search = searchParams.get('search') || '';
@@ -42,27 +43,30 @@ export function Products() {
     loadMeta();
   }, []);
 
-  useEffect(() => {
-    async function fetchProducts() {
-      try {
-        setLoading(true);
-        const params: Record<string, string> = {};
-        if (search) params.search = search;
-        if (selectedCategory) params.category = selectedCategory;
-        if (selectedVendor) params.vendor = selectedVendor;
-        if (ecoFriendly) params.ecoFriendly = 'true';
-        if (sort) params.sort = sort;
-        if (minPrice) params.minPrice = minPrice;
-        if (maxPrice) params.maxPrice = maxPrice;
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      setApiError(null);
+      const params: Record<string, string> = {};
+      if (search) params.search = search;
+      if (selectedCategory) params.category = selectedCategory;
+      if (selectedVendor) params.vendor = selectedVendor;
+      if (ecoFriendly) params.ecoFriendly = 'true';
+      if (sort) params.sort = sort;
+      if (minPrice) params.minPrice = minPrice;
+      if (maxPrice) params.maxPrice = maxPrice;
 
-        const data = await api.getProducts(params);
-        setProducts(data.products || []);
-      } catch (err) {
-        console.error('Failed to fetch products:', err);
-      } finally {
-        setLoading(false);
-      }
+      const data = await api.getProducts(params);
+      setProducts(data.products || []);
+    } catch (err: any) {
+      console.error('Failed to fetch products:', err);
+      setApiError(err.message || 'Unable to connect to marketplace service.');
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     fetchProducts();
   }, [searchParams]);
 
@@ -306,6 +310,24 @@ export function Products() {
               {[...Array(6)].map((_, i) => (
                 <div key={i} className="aspect-square bg-stone-100 rounded-2xl animate-pulse"></div>
               ))}
+            </div>
+          ) : apiError ? (
+            <div className="text-center py-16 bg-white rounded-3xl border border-rose-200 p-8 space-y-4 shadow-sm">
+              <div className="w-16 h-16 rounded-2xl bg-rose-50 text-rose-600 mx-auto flex items-center justify-center">
+                <AlertCircle className="w-8 h-8" />
+              </div>
+              <h3 className="text-lg font-bold text-stone-900">Service Temporarily Unavailable</h3>
+              <p className="text-xs text-stone-600 max-w-md mx-auto leading-relaxed">
+                {apiError}
+              </p>
+              <div className="flex justify-center gap-3 pt-2">
+                <button
+                  onClick={fetchProducts}
+                  className="px-5 py-2.5 bg-[#4a3428] hover:bg-[#634735] text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center gap-2"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" /> Retry Connection
+                </button>
+              </div>
             </div>
           ) : products.length === 0 ? (
             <div className="text-center py-16 bg-white rounded-3xl border border-stone-200 p-8 space-y-4">

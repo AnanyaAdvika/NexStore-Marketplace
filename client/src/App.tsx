@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext.js';
 import { CartProvider } from './context/CartContext.js';
 import { WishlistProvider } from './context/WishlistContext.js';
@@ -39,6 +39,7 @@ import { AdminReviews } from './pages/admin/AdminReviews.js';
 
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: string[] }) {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -49,7 +50,8 @@ function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode;
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    const returnUrl = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`/login?redirect=${returnUrl}`} replace />;
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {

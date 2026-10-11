@@ -43,6 +43,18 @@ export function ComparisonProvider({ children }: { children: React.ReactNode }) 
       error(`You can compare a maximum of ${MAX_COMPARE_ITEMS} products at once.`);
       return;
     }
+
+    // Only compare equivalent models (same catalogGroup) or items within the same category
+    if (comparedProducts.length > 0) {
+      const first = comparedProducts[0];
+      const sameGroup = product.catalogGroup && first.catalogGroup && product.catalogGroup === first.catalogGroup;
+      const sameCategory = product.categoryId === first.categoryId;
+      if (!sameGroup && !sameCategory) {
+        error(`Comparison is restricted to equivalent models or items in the same category (${first.category?.name || 'current'}).`);
+        return;
+      }
+    }
+
     setComparedProducts((prev) => [...prev, product]);
     success(`Added "${product.title}" to product comparison.`);
   };

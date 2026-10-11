@@ -29,7 +29,7 @@ export interface Vendor {
   banner?: string | null;
   phone?: string | null;
   address?: string | null;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
   trustScore: number;
   rating: number;
   totalReviews: number;

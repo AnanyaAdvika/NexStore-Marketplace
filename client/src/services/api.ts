@@ -1,15 +1,14 @@
 const configuredApiUrl = String((import.meta as any).env?.VITE_API_BASE_URL || '').trim().replace(/\/+$/, '');
-const isProduction = Boolean((import.meta as any).env?.PROD);
 
-// A relative "/api" works with the local Vite proxy, but on Vercel the
-// storefront and API are separate projects. Never send production API calls
-// to the static storefront's index.html rewrite.
+// Robust API Base URL resolution:
+// 1. If VITE_API_BASE_URL is provided in environment variables, normalize and use it.
+// 2. Otherwise default to '/api', which works seamlessly with the Vite local proxy in dev
+//    and with reverse-proxy / same-domain deployments in production.
+// NEVER fall back to dead, stale preview URLs.
 const BASE_URL =
   configuredApiUrl && configuredApiUrl !== '/api'
     ? (configuredApiUrl.endsWith('/api') ? configuredApiUrl : `${configuredApiUrl}/api`)
-    : isProduction
-      ? 'https://multi-vendor-chi.vercel.app/api'
-      : '/api';
+    : '/api';
 
 function getToken(): string | null {
   return localStorage.getItem('token');
@@ -33,13 +32,15 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
       headers,
     });
   } catch {
-    throw new Error(`Cannot connect to the marketplace API at ${BASE_URL}. Check that the backend deployment is available.`);
+    throw new Error(
+      `Cannot connect to the marketplace API at ${BASE_URL || '/api'}. Please verify the backend server is running.`
+    );
   }
 
   const contentType = response.headers.get('content-type') || '';
   if (!contentType.includes('application/json')) {
     throw new Error(
-      `The API returned a non-JSON response (${response.status}) from ${BASE_URL}. Check the backend deployment and API URL.`,
+      `The API returned an unexpected non-JSON response (${response.status}) from ${BASE_URL}${endpoint}. Check the backend service configuration.`
     );
   }
 
@@ -135,8 +136,11 @@ export const api = {
   // Admin Dashboard
   getAdminAnalytics: () => request<any>('/admin/analytics'),
   getAdminVendors: () => request<any>('/admin/vendors'),
-  updateVendorStatus: (id: string, status: string) =>
-    request<any>(`/admin/vendors/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
+  updateVendorStatus: (id: string, payload: string | { status?: string; isEcoFriendlyCertified?: boolean }) =>
+    request<any>(`/admin/vendors/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify(typeof payload === 'string' ? { status: payload } : payload),
+    }),
   getAdminCustomers: () => request<any>('/admin/customers'),
   toggleCustomerStatus: (id: string) =>
     request<any>(`/admin/customers/${id}/status`, { method: 'PUT' }),
@@ -145,4 +149,7 @@ export const api = {
   deleteReview: (id: string) => request<any>(`/admin/reviews/${id}`, { method: 'DELETE' }),
   createCategory: (data: any) =>
     request<any>('/admin/categories', { method: 'POST', body: JSON.stringify(data) }),
+
+  // System
+  getHealth: () => request<any>('/health'),
 };

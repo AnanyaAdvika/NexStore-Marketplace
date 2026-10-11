@@ -49,7 +49,7 @@ export function VendorProductForm() {
             compareAtPrice: product.compareAtPrice ? product.compareAtPrice.toString() : '',
             discountPercent: product.discountPercent.toString(),
             stock: product.stock.toString(),
-            imageUrl: product.images?.[0] || '',
+            imageUrl: Array.isArray(product.images) ? product.images.join('\n') : product.images || '',
             sku: product.sku || '',
             catalogGroup: product.catalogGroup || '',
             isEcoFriendly: product.isEcoFriendly,
@@ -77,6 +77,11 @@ export function VendorProductForm() {
 
     try {
       setSubmitting(true);
+      const parsedImages = formData.imageUrl
+        .split(/[\n,]+/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+
       const payload = {
         title: formData.title,
         categoryId: formData.categoryId,
@@ -85,7 +90,7 @@ export function VendorProductForm() {
         compareAtPrice: formData.compareAtPrice ? parseFloat(formData.compareAtPrice) : null,
         discountPercent: parseFloat(formData.discountPercent) || 0,
         stock: parseInt(formData.stock),
-        images: formData.imageUrl ? [formData.imageUrl] : ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800'],
+        images: parsedImages.length > 0 ? parsedImages : ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800'],
         sku: formData.sku || undefined,
         catalogGroup: formData.catalogGroup || undefined,
         isEcoFriendly: formData.isEcoFriendly,
@@ -297,19 +302,16 @@ export function VendorProductForm() {
             </h3>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Image URL</label>
-              <div className="relative">
-                <input
-                  type="url"
-                  value={formData.imageUrl}
-                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                  placeholder="https://images.unsplash.com/photo-..."
-                  className="w-full pl-9 pr-3 py-2.5 text-xs border border-slate-200 rounded-xl"
-                />
-                <ImageIcon className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              </div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Product Photo URLs (One URL per line)</label>
+              <textarea
+                rows={3}
+                value={formData.imageUrl}
+                onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                placeholder={`https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800\nhttps://images.unsplash.com/photo-1484704849700-f032a568e944?w=800`}
+                className="w-full p-3 text-xs border border-slate-200 rounded-xl font-mono"
+              />
               <p className="text-[11px] text-slate-400 mt-1">
-                Tip: Paste any direct image link from Unsplash, Imgur, or cloud storage.
+                Tip: Paste one or multiple direct image URLs. The first image will serve as the primary catalogue cover.
               </p>
             </div>
           </div>

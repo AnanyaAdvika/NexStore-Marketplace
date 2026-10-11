@@ -56,10 +56,10 @@ export async function register(req: Request, res: Response) {
           userId: user.id,
           storeName,
           slug,
-          description: data.storeDescription || 'Premium marketplace seller',
-          isEcoFriendlyCertified: !!data.isEcoFriendlyCertified,
-          status: 'APPROVED', // Auto-approved for smooth demonstration
-          trustScore: 85.0,
+          description: data.storeDescription || 'Marketplace seller applicant',
+          isEcoFriendlyCertified: false, // Must be audited and approved by Admin
+          status: 'PENDING', // Awaiting Admin verification and approval
+          trustScore: 70.0,
         },
       });
     }

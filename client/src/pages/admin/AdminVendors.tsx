@@ -99,34 +99,64 @@ export function AdminVendors() {
                         </td>
 
                         <td className="py-4 px-5">
-                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                            v.status === 'APPROVED'
-                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                              : v.status === 'REJECTED'
-                              ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                              : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                          }`}>
-                            {v.status}
-                          </span>
+                          <div className="flex flex-col gap-1.5 items-start">
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                              v.status === 'APPROVED'
+                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                : v.status === 'SUSPENDED' || v.status === 'REJECTED'
+                                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                                : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                            }`}>
+                              {v.status}
+                            </span>
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await api.updateVendorStatus(v.id, { isEcoFriendlyCertified: !v.isEcoFriendlyCertified });
+                                  success(`Eco status updated for ${v.storeName}`);
+                                  await loadVendors();
+                                } catch (err: any) {
+                                  error(err.message || 'Failed to update eco status');
+                                }
+                              }}
+                              className={`text-[10px] px-2 py-0.5 rounded font-semibold transition-all border ${
+                                v.isEcoFriendlyCertified
+                                  ? 'bg-emerald-950/60 text-emerald-300 border-emerald-600 hover:bg-emerald-900'
+                                  : 'bg-slate-800 text-slate-400 border-slate-600 hover:text-white'
+                              }`}
+                              title="Click to toggle admin eco-certification audit"
+                            >
+                              {v.isEcoFriendlyCertified ? '🌿 Eco-Certified' : '○ Not Certified'}
+                            </button>
+                          </div>
                         </td>
 
                         <td className="py-4 px-5 text-right">
-                          <div className="flex items-center justify-end gap-2">
+                          <div className="flex items-center justify-end gap-1.5 flex-wrap">
                             {v.status !== 'APPROVED' && (
                               <button
                                 onClick={() => handleUpdateStatus(v.id, 'APPROVED', v.storeName)}
-                                className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all shadow-xs"
+                                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all shadow-xs"
                               >
                                 Approve
                               </button>
                             )}
 
-                            {v.status !== 'REJECTED' && (
+                            {v.status !== 'SUSPENDED' && v.status === 'APPROVED' && (
                               <button
-                                onClick={() => handleUpdateStatus(v.id, 'REJECTED', v.storeName)}
-                                className="px-3 py-1 bg-rose-600/80 hover:bg-rose-600 text-white rounded-lg text-xs font-bold transition-all"
+                                onClick={() => handleUpdateStatus(v.id, 'SUSPENDED', v.storeName)}
+                                className="px-2.5 py-1 bg-amber-600/80 hover:bg-amber-600 text-white rounded-lg text-xs font-bold transition-all"
                               >
                                 Suspend
+                              </button>
+                            )}
+
+                            {v.status !== 'REJECTED' && v.status !== 'SUSPENDED' && (
+                              <button
+                                onClick={() => handleUpdateStatus(v.id, 'REJECTED', v.storeName)}
+                                className="px-2.5 py-1 bg-rose-600/80 hover:bg-rose-600 text-white rounded-lg text-xs font-bold transition-all"
+                              >
+                                Reject
                               </button>
                             )}
                           </div>
